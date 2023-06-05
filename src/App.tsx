@@ -3,7 +3,6 @@ import React, {useState, useContext, useMemo} from "react"
 /* Muuri react */
 import {MuuriComponent, getResponsiveStyle} from "muuri-react"
 import {useMediaQuery} from "react-responsive"
-import {createRoot} from "react-dom/client"
 /* Utils & components */
 import {generateItems, ThemeContext} from "./utils"
 import {Header, Demo} from "./components"
@@ -67,7 +66,4 @@ const Item = ({color, title}) => {
     </div>
   )
 }
-
-const container = document.getElementById("root")
-const root = createRoot(container) // createRoot(container!) if you use TypeScript
-root.render(<App />)
+export default App
