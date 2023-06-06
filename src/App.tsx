@@ -25,10 +25,10 @@ export const ResizableWrapper = (Component, {width, height}) => {
         ref={ref}
         className="item"
         style={{width: `${width}px`, height: `${height}px`}}
-        // isLocked
       >
         <div>
           <ResizableBox
+            draggableOpts={{grid: [8, 8]}}
             width={width}
             height={height}
             minConstraints={[width, height]}
@@ -38,6 +38,7 @@ export const ResizableWrapper = (Component, {width, height}) => {
 
               refreshWithdebounce()
             }}
+            axis={props.isLocked ? "none" : "both"}
           >
             <Component {...props} />
           </ResizableBox>
