@@ -92,8 +92,7 @@ export const AreaChartGraph = ResizableWrapper(
     }
     return (
       <Card className="h-full">
-        <div className="content-header" />
-        {/* <Title className="area-chart-header">Hello world</Title> */}
+        <Title className="area-chart-header">Hello world</Title>
         <AreaChart
           className="h-full"
           data={chartdata}
@@ -128,13 +127,19 @@ const App = () => {
   return (
     <MuuriComponent
       dragEnabled
-      // dragStartPredicate={{handle: ".content-header"}}
+      dragStartPredicate={function (_item, e) {
+        console.log(e.target.classList)
+        if (e.target.classList.contains("react-resizable-handle")) {
+          return false
+        }
+        return true
+        // Implement your logic...
+      }}
       dragSortPredicate={(item) => {
         const result = Muuri.ItemDrag.defaultSortPredicate(
           item,
           dragSortOptions
         )
-        console.log(result?.grid._items[result.index]._component)
         if (
           result &&
           result.grid._items[result.index]._component.props.isLocked
