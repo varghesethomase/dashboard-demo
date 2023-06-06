@@ -1,8 +1,8 @@
-import {useState, useContext, useMemo} from "react"
-import {MuuriComponent, getResponsiveStyle} from "muuri-react"
+import {useState} from "react"
+import {MuuriComponent} from "muuri-react"
 import {AreaChart, Card, Title} from "@tremor/react"
-import {useMediaQuery} from "react-responsive"
-import {generateItems, ThemeContext} from "./utils"
+import {ResizableBox} from "react-resizable"
+import {generateItems} from "./utils"
 import {Header, Demo} from "./components"
 
 const chartdata = [
@@ -43,17 +43,24 @@ const dataFormatter = (number: number) => {
 }
 
 export const AreaChartGraph = () => (
-  <Card>
-    <Title>Newsletter revenue over time (USD)</Title>
-    <AreaChart
-      className="mt-4"
-      data={chartdata}
-      index="date"
-      categories={["SemiAnalysis", "The Pragmatic Engineer"]}
-      colors={["indigo", "cyan"]}
-      valueFormatter={dataFormatter}
-    />
-  </Card>
+  <ResizableBox
+    width={200}
+    height={200}
+    minConstraints={[100, 100]}
+    maxConstraints={[300, 300]}
+  >
+    <Card className="h-full">
+      <Title>Hello world</Title>
+      <AreaChart
+        className="mt-4 h-full"
+        data={chartdata}
+        index="date"
+        categories={["SemiAnalysis", "The Pragmatic Engineer"]}
+        colors={["indigo", "cyan"]}
+        valueFormatter={dataFormatter}
+      />
+    </Card>
+  </ResizableBox>
 )
 
 // App.
