@@ -1,69 +1,85 @@
-/* React */
-import React, {useState, useContext, useMemo} from "react"
-/* Muuri react */
+import {useState, useContext, useMemo} from "react"
 import {MuuriComponent, getResponsiveStyle} from "muuri-react"
+import {AreaChart, Card, Title} from "@tremor/react"
 import {useMediaQuery} from "react-responsive"
-/* Utils & components */
 import {generateItems, ThemeContext} from "./utils"
 import {Header, Demo} from "./components"
-/* Style */
-import "./style.css"
+
+const chartdata = [
+  {
+    date: "Jan 22",
+    SemiAnalysis: 2890,
+    "The Pragmatic Engineer": 2338,
+  },
+  {
+    date: "Feb 22",
+    SemiAnalysis: 2756,
+    "The Pragmatic Engineer": 2103,
+  },
+  {
+    date: "Mar 22",
+    SemiAnalysis: 3322,
+    "The Pragmatic Engineer": 2194,
+  },
+  {
+    date: "Apr 22",
+    SemiAnalysis: 3470,
+    "The Pragmatic Engineer": 2108,
+  },
+  {
+    date: "May 22",
+    SemiAnalysis: 3475,
+    "The Pragmatic Engineer": 1812,
+  },
+  {
+    date: "Jun 22",
+    SemiAnalysis: 3129,
+    "The Pragmatic Engineer": 1726,
+  },
+]
+
+const dataFormatter = (number: number) => {
+  return "$ " + Intl.NumberFormat("us").format(number).toString()
+}
+
+export const AreaChartGraph = () => (
+  <Card>
+    <Title>Newsletter revenue over time (USD)</Title>
+    <AreaChart
+      className="mt-4"
+      data={chartdata}
+      index="date"
+      categories={["SemiAnalysis", "The Pragmatic Engineer"]}
+      colors={["indigo", "cyan"]}
+      valueFormatter={dataFormatter}
+    />
+  </Card>
+)
 
 // App.
 const App = () => {
   // Items state.
   const [items] = useState(generateItems())
   // Items to children.
-  const children = items.map((props) => <Item key={props.id} {...props} />)
+  const children = items.map(() => <AreaChartGraph />)
 
   return (
     <Demo>
       <Header />
-      <ThemeProvider>
-        <MuuriComponent
-          dragEnabled
-          dragFixed
-          dragSortPredicate={{
-            action: "swap",
-          }}
-          dragSortHeuristics={{
-            sortInterval: 0,
-          }}
-        >
-          {children}
-        </MuuriComponent>
-      </ThemeProvider>
+      <MuuriComponent
+        dragEnabled
+        dragFixed
+        dragSortPredicate={{
+          action: "swap",
+        }}
+        dragSortHeuristics={{
+          sortInterval: 0,
+        }}
+      >
+        {children}
+      </MuuriComponent>
     </Demo>
   )
 }
 
-// Responsive theme provider.
-const ThemeProvider = ({children}) => {
-  const isBigScreen = useMediaQuery({
-    query: "(min-width: 824px)",
-  })
-
-  // Memoize the style.
-  const style = useMemo(() => {
-    return getResponsiveStyle({
-      columns: isBigScreen ? 1 / 4 : 1 / 3,
-      margin: "1%",
-      ratio: 2,
-    })
-  }, [isBigScreen])
-
-  return <ThemeContext.Provider value={style}>{children}</ThemeContext.Provider>
-}
-
-// Item component.
-const Item = ({color, title}) => {
-  // The style concerns only the "dimensions" and "margins" of the items.
-  const style = useContext(ThemeContext)
-
-  return (
-    <div style={style} className={`item ${color}`}>
-      <div className="item-content">{title}</div>
-    </div>
-  )
-}
 export default App
