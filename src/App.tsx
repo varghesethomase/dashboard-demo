@@ -1,5 +1,11 @@
-import {useDeferredValue, useRef, useState} from "react"
-import {MuuriComponent, useDraggable, useRefresh} from "muuri-react"
+import {
+  useDeferredValue,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react"
+import {MuuriComponent, useDraggable, useGrid, useRefresh} from "muuri-react"
 import {AreaChart, Card, Title} from "@tremor/react"
 import {ResizableBox} from "react-resizable"
 import {generateItems} from "./utils"
@@ -14,12 +20,12 @@ export const ResizableWrapper = (Component, {width, height}) => {
     // You can implement it however you want.
     const ref = useRef()
     const refresh = useRefresh()
+    const {grid} = useGrid()
     // Get the best performance with debouncing.
     // It is not mandatory to use.
     const refreshWithdebounce = useDeferredValue(() =>
       requestAnimationFrame(refresh)
     )
-
     return (
       <div
         ref={ref}
@@ -92,8 +98,13 @@ export const AreaChartGraph = ResizableWrapper(
       setDraggable(false)
     }
     return (
-      <Card className="h-full">
-        <Title className="area-chart-header">Hello world</Title>
+      <Card
+        className="h-full"
+        style={{
+          border: props.isLocked ? "1px solid blue" : "1px solid green",
+        }}
+      >
+        <Title className="area-chart-header">Hello world {props.id}</Title>
         <AreaChart
           className="h-full"
           data={chartdata}
@@ -122,29 +133,36 @@ const App = () => {
 
   // Items to children.
   const children = items.map((item) => (
-    <AreaChartGraph key={item.id} isLocked={item.color === "blue"} />
+    <AreaChartGraph
+      key={item.id}
+      isLocked={item.color === "blue"}
+      id={item.id}
+    />
   ))
 
   return (
     <MuuriComponent
+      onMount={(grid) => {
+        // Drag release event.
+        grid.on("dragReleaseEnd", (item) => {
+          // Do something...
+        })
+      }}
+      layoutDuration={0}
       dragEnabled
+      dragFixed
       dragStartPredicate={function (_item, e) {
-        console.log(e.target.classList)
         if (e.target.classList.contains("react-resizable-handle")) {
           return false
         }
         return true
-        // Implement your logic...
       }}
       dragSortPredicate={(item) => {
         const result = Muuri.ItemDrag.defaultSortPredicate(
           item,
           dragSortOptions
         )
-        if (
-          result &&
-          result.grid._items[result.index]._component.props.isLocked
-        ) {
+        if (result?.grid._items[result.index].getProps().isLocked) {
           return false
         }
         return result

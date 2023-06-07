@@ -25,3 +25,6 @@
 .recharts-wrapper {
   pointer-events: none;
 }
+.muuri {
+  padding: 16px;
+}
