@@ -148,7 +148,7 @@ const App = () => {
           // Do something...
         })
       }}
-      layoutDuration={0}
+      // layoutDuration={0}
       dragEnabled
       dragFixed
       dragStartPredicate={function (_item, e) {
@@ -172,6 +172,9 @@ const App = () => {
       // }}
       dragSortHeuristics={{
         sortInterval: 0,
+      }}
+      layout={{
+        fillGaps: true,
       }}
     >
       {children}
