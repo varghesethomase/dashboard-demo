@@ -175,6 +175,7 @@ const App = () => {
       }}
       layout={{
         fillGaps: true,
+        rounding: true,
       }}
     >
       {children}
