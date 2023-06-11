@@ -4,11 +4,11 @@ import ReactFlow, {
   Controls,
   ReactFlowProvider,
 } from "reactflow"
-
-import "reactflow/dist/style.css"
-import ResizableNode from "./components/ResizableNode/ResizableNode"
 import AreaChartNode from "./components/AreaChartNode"
 import {useMemo, useState} from "react"
+
+import "reactflow/dist/style.css"
+import "./App.css"
 
 const chartData = [
   {
