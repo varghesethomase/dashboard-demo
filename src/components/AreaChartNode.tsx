@@ -8,13 +8,13 @@ interface Props {
   isLocked: boolean
 }
 
-const AreaChartNode = memo(({id, data}: Omit<Node<Props>, "position">) => {
+const AreaChartNode = memo(({data}: Omit<Node<Props>, "position">) => {
   const dataFormatter = (number: number) => {
     return "$ " + Intl.NumberFormat("us").format(number).toString()
   }
 
   return (
-    <ResizableNode minHeight={200} minWidth={300} isLocked={data.isLocked}>
+    <ResizableNode minHeight={320} minWidth={560} isLocked={data.isLocked}>
       <Card className="h-full">
         <Title className="area-chart-header">Hello world</Title>
         <AreaChart

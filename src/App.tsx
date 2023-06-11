@@ -5,10 +5,10 @@ import ReactFlow, {
   ReactFlowProvider,
 } from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
-import {useMemo, useState} from "react"
+import {useMemo, useRef, useState} from "react"
 
 import "reactflow/dist/style.css"
-import "./App.css"
+import "./App.scss"
 
 const chartData = [
   {
@@ -70,7 +70,9 @@ const initialNodes = [
 
 export default function App() {
   const [isEditing, seItsEditing] = useState(true)
-
+  const flowRef = useRef<HTMLDivElement>(null)
+  const flowCoordinates = flowRef.current?.getBoundingClientRect()
+  console.log(flowRef)
   const nodeTypes = useMemo(
     () => ({
       AreaChartNode,
@@ -79,39 +81,54 @@ export default function App() {
   )
 
   return (
-    <ReactFlowProvider>
-      <div style={{width: "100vw", height: "100vh"}}>
-        <ReactFlow
-          defaultNodes={initialNodes}
-          nodeTypes={nodeTypes}
-          minZoom={1}
-          maxZoom={isEditing ? 3 : 1}
-          fitView
-          panOnScroll={false}
-          panOnDrag={false}
-          selectionOnDrag
-        >
-          {isEditing && (
-            <>
-              <Background
-                id="1"
-                gap={10}
-                color="#f1f1f1"
-                variant={BackgroundVariant.Lines}
-              />
-              <Background
-                id="2"
-                gap={100}
-                offset={1}
-                color="#ccc"
-                variant={BackgroundVariant.Lines}
-              />
-            </>
-          )}
+    <main className="dashboard">
+      <div className="dashboard__editor-wrapper">
+        <ReactFlowProvider>
+          <ReactFlow
+            ref={flowRef}
+            className="dashboard__editor"
+            defaultNodes={initialNodes}
+            nodeTypes={nodeTypes}
+            minZoom={1}
+            maxZoom={isEditing ? 4 : 1}
+            defaultViewport={{
+              x: 0,
+              y: 0,
+              zoom: 1,
+            }}
+            autoPanOnNodeDrag={false}
+            fitView
+            selectionOnDrag
+            snapToGrid
+            nodeExtent={[
+              [-300, -200],
+              [0, 400],
+            ]}
+          >
+            {isEditing && (
+              <>
+                <Background
+                  id="1"
+                  gap={10}
+                  color="#f1f1f1"
+                  variant={BackgroundVariant.Lines}
+                />
+                <Background
+                  id="2"
+                  gap={100}
+                  offset={1}
+                  color="#ccc"
+                  variant={BackgroundVariant.Lines}
+                />
+              </>
+            )}
 
-          <Controls />
-        </ReactFlow>
+            <Controls />
+          </ReactFlow>
+        </ReactFlowProvider>
       </div>
-    </ReactFlowProvider>
+
+      <aside className="dashboard__sidebar">hello</aside>
+    </main>
   )
 }

@@ -1,0 +1,21 @@
+.dashboard {
+  display: flex;
+  position: relative;
+  height: 100vh;
+  &__editor-wrapper {
+    background-color: #e0e6ee;
+    padding: 32px;
+    width: 70%;
+  }
+  &__editor {
+    background-color: #fff;
+    border: 1px solid #a2abb7;
+    border-radius: 8px;
+  }
+  &__sidebar {
+    width: 30%;
+  }
+}
+.recharts-wrapper {
+  pointer-events: none;
+}
