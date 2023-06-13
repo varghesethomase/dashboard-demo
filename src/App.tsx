@@ -48,7 +48,7 @@ const chartData = [
 const initialNodes = [
   {
     id: "1",
-    position: {x: 200, y: 50},
+    position: {x: 0, y: 0},
     expandParent: true,
     data: {
       isLocked: false,
@@ -60,7 +60,7 @@ const initialNodes = [
   },
   {
     id: "2",
-    position: {x: 0, y: 50},
+    position: {x: 0, y: 320},
     expandParent: true,
     data: {
       isLocked: false,
@@ -98,10 +98,11 @@ export default function App() {
               y: 0,
               zoom: 1,
             }}
+            panOnDrag={false}
             panOnScrollMode={PanOnScrollMode.Vertical}
-            // autoPanOnNodeDrag={false}
-            // panOnScroll={false}
-            // panOnDrag={false}
+            autoPanOnNodeDrag={true}
+            panOnScroll={true}
+            zoomOnScroll={false}
             // fitView
             selectionOnDrag
             // snapToGrid
