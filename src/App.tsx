@@ -47,7 +47,20 @@ const chartData = [
 
 const initialNodes = [
   {
+    id: "A",
+    type: "group",
+    position: {x: 0, y: 0},
+    style: {
+      width: 1080,
+      maxWidth: 1080,
+      height: 1980,
+      maxHeight: Infinity,
+    },
+    draggable: false,
+  },
+  {
     id: "1",
+    parentNode: "A",
     position: {x: 0, y: 0},
     expandParent: true,
     data: {
@@ -57,9 +70,11 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
+    extent: "parent",
   },
   {
     id: "2",
+    parentNode: "A",
     position: {x: 0, y: 320},
     expandParent: true,
     data: {
@@ -69,6 +84,7 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
+    extent: "parent",
   },
 ]
 
@@ -91,8 +107,8 @@ export default function App() {
             className="dashboard__editor"
             nodes={nodes}
             nodeTypes={nodeTypes}
-            minZoom={1}
-            maxZoom={isEditing ? 2 : 1}
+            minZoom={0.5}
+            maxZoom={isEditing ? 2 : 0.5}
             defaultViewport={{
               x: 0,
               y: 0,
@@ -103,13 +119,13 @@ export default function App() {
             autoPanOnNodeDrag={true}
             panOnScroll={true}
             zoomOnScroll={false}
-            // fitView
             selectionOnDrag
             // snapToGrid
-            // nodeExtent={[
-            //   [-300, -265],
-            //   [500, Infinity],
-            // ]}
+            nodeExtent={[
+              [0, 0],
+              [960, Infinity],
+            ]}
+            fitView
             // onNodeDragStop={(event, node, nodes) => {
             //   console.log(event, node)
             // }}
@@ -119,14 +135,14 @@ export default function App() {
               <>
                 <Background
                   id="1"
-                  gap={10}
+                  gap={8}
                   color="#f1f1f1"
                   variant={BackgroundVariant.Lines}
                 />
                 <Background
                   id="2"
-                  gap={100}
-                  offset={1}
+                  gap={64}
+                  offset={2}
                   color="#ccc"
                   variant={BackgroundVariant.Lines}
                 />
