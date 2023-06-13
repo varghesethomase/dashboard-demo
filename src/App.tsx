@@ -2,10 +2,12 @@ import ReactFlow, {
   Background,
   BackgroundVariant,
   Controls,
+  PanOnScrollMode,
   ReactFlowProvider,
+  useNodesState,
 } from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
-import {useMemo, useRef, useState} from "react"
+import {useMemo, useState} from "react"
 
 import "reactflow/dist/style.css"
 import "./App.scss"
@@ -47,6 +49,7 @@ const initialNodes = [
   {
     id: "1",
     position: {x: 200, y: 50},
+    expandParent: true,
     data: {
       isLocked: false,
       chartData,
@@ -58,6 +61,7 @@ const initialNodes = [
   {
     id: "2",
     position: {x: 0, y: 50},
+    expandParent: true,
     data: {
       isLocked: false,
       chartData,
@@ -70,9 +74,6 @@ const initialNodes = [
 
 export default function App() {
   const [isEditing, seItsEditing] = useState(true)
-  const flowRef = useRef<HTMLDivElement>(null)
-  const flowCoordinates = flowRef.current?.getBoundingClientRect()
-  console.log(flowRef)
   const nodeTypes = useMemo(
     () => ({
       AreaChartNode,
@@ -80,30 +81,38 @@ export default function App() {
     []
   )
 
+  const [nodes, _setNodes, onNodesChange] = useNodesState(initialNodes)
+
   return (
     <main className="dashboard">
       <div className="dashboard__editor-wrapper">
         <ReactFlowProvider>
           <ReactFlow
-            ref={flowRef}
             className="dashboard__editor"
-            defaultNodes={initialNodes}
+            nodes={nodes}
             nodeTypes={nodeTypes}
             minZoom={1}
-            maxZoom={isEditing ? 4 : 1}
+            maxZoom={isEditing ? 2 : 1}
             defaultViewport={{
               x: 0,
               y: 0,
               zoom: 1,
             }}
-            autoPanOnNodeDrag={false}
-            fitView
+            panOnScrollMode={PanOnScrollMode.Vertical}
+            // autoPanOnNodeDrag={false}
+            // panOnScroll={false}
+            // panOnDrag={false}
+            // fitView
             selectionOnDrag
-            snapToGrid
-            nodeExtent={[
-              [-300, -200],
-              [0, 400],
-            ]}
+            // snapToGrid
+            // nodeExtent={[
+            //   [-300, -265],
+            //   [500, Infinity],
+            // ]}
+            // onNodeDragStop={(event, node, nodes) => {
+            //   console.log(event, node)
+            // }}
+            onNodesChange={onNodesChange}
           >
             {isEditing && (
               <>

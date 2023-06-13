@@ -5,15 +5,17 @@
   &__editor-wrapper {
     background-color: #e0e6ee;
     padding: 32px;
-    width: 70%;
+    min-width: calc(960px + 2 * 32px);
+    overflow-x: auto;
   }
   &__editor {
     background-color: #fff;
     border: 1px solid #a2abb7;
     border-radius: 8px;
+    width: 960px;
   }
   &__sidebar {
-    width: 30%;
+    flex: 1;
   }
 }
 .recharts-wrapper {
