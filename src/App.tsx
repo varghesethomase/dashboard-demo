@@ -3,19 +3,19 @@ import ReactFlow, {
   BackgroundVariant,
   Controls,
   PanOnScrollMode,
+  ReactFlowInstance,
   ReactFlowProvider,
-  addEdge,
-  useEdgesState,
   useNodesState,
+  useReactFlow,
 } from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
 import BarChartNode from "./components/BarChartNode"
 
-import {useCallback, useMemo, useRef, useState} from "react"
+import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
 
 import "reactflow/dist/style.css"
 import "./App.scss"
-import { Sidebar } from "./Sidebar"
+import {Sidebar} from "./Sidebar"
 
 const chartData = [
   {
@@ -49,8 +49,8 @@ const chartData = [
     "The Pragmatic Engineer": 1726,
   },
 ]
-let id = 0;
-const getId = () => `dndnode_${id++}`;
+let id = 0
+const getId = () => `dndnode_${id++}`
 
 const initialNodes = [
   {
@@ -61,7 +61,7 @@ const initialNodes = [
       width: window.innerWidth - 400,
       maxWidth: window.innerWidth - 400,
       height: 1980,
-      maxHeight: Infinity,
+      maxHeight: 1080,
     },
     draggable: false,
   },
@@ -100,72 +100,65 @@ export default function App() {
   const nodeTypes = useMemo(
     () => ({
       AreaChartNode,
-      BarChartNode
+      BarChartNode,
     }),
     []
   )
 
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const reactFlowWrapper = useRef<any>(null);
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance>()
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
 
-  // transform: translate(18.1536px, -149.435px) scale(1.24416);
-
-  // default 1 => transform: translate(420px, -193px) scale(0.5);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), []);
 
+  const onDrop: DragEventHandler<HTMLDivElement> = useCallback(
+    (event) => {
+      console.log("-e", event)
+      event.preventDefault()
 
-  const onDrop = useCallback(
-    (event: any) => {
-      console.log('-e', event)
-      event.preventDefault();
+      if (reactFlowWrapper.current) {
+        const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect()
+        const type = event.dataTransfer.getData("application/reactflow")
 
-      const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-      const type = event.dataTransfer.getData('application/reactflow');
+        // check if the dropped element is valid
+        if (typeof type === "undefined" || !type) {
+          return
+        }
+        if (reactFlowInstance) {
+          const position = reactFlowInstance.project({
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+          })
 
-      // check if the dropped element is valid
-      if (typeof type === 'undefined' || !type) {
-        return;
+          const newNode = {
+            id: getId(),
+            type,
+            position,
+            data: {
+              isLocked: false,
+              chartData,
+              label: `${type} node`,
+            },
+            deletable: true,
+            isLocked: false,
+            expandParent: true,
+            parentNode: "A",
+            extents: "parent",
+          }
+
+          setNodes((nds) => nds.concat(newNode))
+        }
       }
-
-      const position = reactFlowInstance?.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-      // const newNode = {
-      //   id: getId(),
-      //   type,
-      //   position,
-      //   data: { label: `${type} node` },
-      // };
-
-      const newNode = {
-        id: getId(),
-        type,
-        position,
-        data: {
-          isLocked: false,
-          chartData,
-          label: `${type} node`
-        },
-        deletable: true,
-        isLocked: false,
-        expandParent: true,
-        parentNode: "A",
-        extent: "parent",
-      }
-
-      setNodes((nds) => nds.concat(newNode as any));
     },
     [reactFlowInstance, setNodes]
-  );
+  )
 
-    const onDragOver = useCallback((event: any) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
-    }, []);
-
+  const handleDragOver: DragEventHandler<HTMLDivElement> = (event) => {
+    event.preventDefault()
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move"
+    }
+  }
 
   return (
     <main className="dashboard dndflow">
@@ -175,13 +168,10 @@ export default function App() {
             ref={reactFlowWrapper}
             className="dashboard__editor"
             nodes={nodes}
-            edges={edges}
             onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
             onInit={setReactFlowInstance}
             onDrop={onDrop}
-            onDragOver={onDragOver}
+            onDragOver={handleDragOver}
             fitView
             nodeTypes={nodeTypes}
             minZoom={1}

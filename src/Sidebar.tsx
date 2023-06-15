@@ -1,21 +1,43 @@
+enum NodeType {
+  AreaChart = "AreaChartNode",
+  BarChart = "BarChartNode",
+  Normal = "normal",
+}
 export const Sidebar = () => {
-  const onDragStart = (event: any, nodeType: any) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
-  };
+  const onDragStart = (
+    event: React.DragEvent<HTMLDivElement>,
+    nodeType: NodeType
+  ) => {
+    event.dataTransfer.setData("application/reactflow", nodeType)
+    event.dataTransfer.effectAllowed = "move"
+  }
 
   return (
-    <aside className='dashboard__sidebar'>
-      <div className="description">You can drag these nodes to the pane on the right.</div>
-      <div className="dndnode input" onDragStart={(event) => onDragStart(event, 'AreaChartNode')} draggable>
+    <aside className="dashboard__sidebar">
+      <div className="description">
+        You can drag these nodes to the pane on the right.
+      </div>
+      <div
+        className="dndnode input"
+        onDragStart={(event) => onDragStart(event, NodeType.AreaChart)}
+        draggable
+      >
         Area Chart
       </div>
-      <div className="dndnode" onDragStart={(event) => onDragStart(event, 'BarChartNode')} draggable>
+      <div
+        className="dndnode"
+        onDragStart={(event) => onDragStart(event, NodeType.BarChart)}
+        draggable
+      >
         Bar Chart
       </div>
-      <div className="dndnode output" onDragStart={(event) => onDragStart(event, 'normal')} draggable>
+      <div
+        className="dndnode output"
+        onDragStart={(event) => onDragStart(event, NodeType.Normal)}
+        draggable
+      >
         Normal Node
       </div>
     </aside>
-  );
-};
+  )
+}
