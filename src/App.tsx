@@ -4,13 +4,18 @@ import ReactFlow, {
   Controls,
   PanOnScrollMode,
   ReactFlowProvider,
+  addEdge,
+  useEdgesState,
   useNodesState,
 } from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
-import {useMemo, useState} from "react"
+import BarChartNode from "./components/BarChartNode"
+
+import {useCallback, useMemo, useRef, useState} from "react"
 
 import "reactflow/dist/style.css"
 import "./App.scss"
+import { Sidebar } from "./Sidebar"
 
 const chartData = [
   {
@@ -44,6 +49,8 @@ const chartData = [
     "The Pragmatic Engineer": 1726,
   },
 ]
+let id = 0;
+const getId = () => `dndnode_${id++}`;
 
 const initialNodes = [
   {
@@ -51,15 +58,15 @@ const initialNodes = [
     type: "group",
     position: {x: 0, y: 0},
     style: {
-      width: 1080,
-      maxWidth: 1080,
+      width: window.innerWidth - 400,
+      maxWidth: window.innerWidth - 400,
       height: 1980,
       maxHeight: Infinity,
     },
     draggable: false,
   },
   {
-    id: "1",
+    id: getId(),
     parentNode: "A",
     position: {x: 0, y: 0},
     expandParent: true,
@@ -73,7 +80,7 @@ const initialNodes = [
     extent: "parent",
   },
   {
-    id: "2",
+    id: getId(),
     parentNode: "A",
     position: {x: 0, y: 320},
     expandParent: true,
@@ -93,30 +100,101 @@ export default function App() {
   const nodeTypes = useMemo(
     () => ({
       AreaChartNode,
+      BarChartNode
     }),
     []
   )
 
-  const [nodes, _setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const reactFlowWrapper = useRef<any>(null);
+
+  // transform: translate(18.1536px, -149.435px) scale(1.24416);
+
+  // default 1 => transform: translate(420px, -193px) scale(0.5);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), []);
+
+
+  const onDrop = useCallback(
+    (event: any) => {
+      console.log('-e', event)
+      event.preventDefault();
+
+      const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+      const type = event.dataTransfer.getData('application/reactflow');
+
+      // check if the dropped element is valid
+      if (typeof type === 'undefined' || !type) {
+        return;
+      }
+
+      const position = reactFlowInstance?.project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
+      // const newNode = {
+      //   id: getId(),
+      //   type,
+      //   position,
+      //   data: { label: `${type} node` },
+      // };
+
+      const newNode = {
+        id: getId(),
+        type,
+        position,
+        data: {
+          isLocked: false,
+          chartData,
+          label: `${type} node`
+        },
+        deletable: true,
+        isLocked: false,
+        expandParent: true,
+        parentNode: "A",
+        extent: "parent",
+      }
+
+      setNodes((nds) => nds.concat(newNode as any));
+    },
+    [reactFlowInstance, setNodes]
+  );
+
+    const onDragOver = useCallback((event: any) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    }, []);
+
 
   return (
-    <main className="dashboard">
+    <main className="dashboard dndflow">
       <div className="dashboard__editor-wrapper">
         <ReactFlowProvider>
           <ReactFlow
+            ref={reactFlowWrapper}
             className="dashboard__editor"
             nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            fitView
             nodeTypes={nodeTypes}
-            minZoom={0.5}
-            maxZoom={isEditing ? 2 : 0.5}
+            minZoom={1}
+            maxZoom={isEditing ? 2 : 1}
             defaultViewport={{
               x: 0,
               y: 0,
               zoom: 1,
             }}
+            zoomOnPinch={false}
             panOnDrag={false}
             panOnScrollMode={PanOnScrollMode.Vertical}
-            autoPanOnNodeDrag={true}
+            autoPanOnNodeDrag={false}
             panOnScroll={true}
             zoomOnScroll={false}
             selectionOnDrag
@@ -125,11 +203,10 @@ export default function App() {
               [0, 0],
               [960, Infinity],
             ]}
-            fitView
+            // fitView
             // onNodeDragStop={(event, node, nodes) => {
             //   console.log(event, node)
             // }}
-            onNodesChange={onNodesChange}
           >
             {isEditing && (
               <>
@@ -154,7 +231,7 @@ export default function App() {
         </ReactFlowProvider>
       </div>
 
-      <aside className="dashboard__sidebar">hello</aside>
+      <Sidebar />
     </main>
   )
 }
