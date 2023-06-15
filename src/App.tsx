@@ -61,7 +61,7 @@ const initialNodes = [
       width: window.innerWidth - 400,
       maxWidth: window.innerWidth - 400,
       height: 1980,
-      maxHeight: 1080,
+      maxHeight: "auto",
     },
     draggable: false,
   },
