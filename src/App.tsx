@@ -6,12 +6,19 @@ import ReactFlow, {
   ReactFlowInstance,
   ReactFlowProvider,
   useNodesState,
-  useReactFlow,
 } from "reactflow"
+import type {Node} from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
 import BarChartNode from "./components/BarChartNode"
 
-import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
+import {
+  DragEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 
 import "reactflow/dist/style.css"
 import "./App.scss"
@@ -54,22 +61,8 @@ const getId = () => `dndnode_${id++}`
 
 const initialNodes = [
   {
-    id: "A",
-    type: "group",
-    position: {x: 0, y: 0},
-    style: {
-      width: window.innerWidth - 400,
-      maxWidth: window.innerWidth - 400,
-      height: 1980,
-      maxHeight: "auto",
-    },
-    draggable: false,
-  },
-  {
     id: getId(),
-    parentNode: "A",
     position: {x: 0, y: 0},
-    expandParent: true,
     data: {
       isLocked: false,
       chartData,
@@ -77,11 +70,10 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    extent: "parent",
+    // extent: "parent",
   },
   {
     id: getId(),
-    parentNode: "A",
     position: {x: 0, y: 320},
     expandParent: true,
     data: {
@@ -91,12 +83,18 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    extent: "parent",
+    // extent: "parent",
   },
 ]
 
 export default function App() {
   const [isEditing, seItsEditing] = useState(true)
+  const [currentDraggedNodes, setCurrentDraggedNode] =
+    useState<Node<unknown>[]>()
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance>()
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
+
   const nodeTypes = useMemo(
     () => ({
       AreaChartNode,
@@ -104,18 +102,11 @@ export default function App() {
     }),
     []
   )
-
-  const [reactFlowInstance, setReactFlowInstance] =
-    useState<ReactFlowInstance>()
-  const reactFlowWrapper = useRef<HTMLDivElement>(null)
-
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
 
   const onDrop: DragEventHandler<HTMLDivElement> = useCallback(
     (event) => {
-      console.log("-e", event)
       event.preventDefault()
-
       if (reactFlowWrapper.current) {
         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect()
         const type = event.dataTransfer.getData("application/reactflow")
@@ -141,12 +132,9 @@ export default function App() {
             },
             deletable: true,
             isLocked: false,
-            expandParent: true,
-            parentNode: "A",
-            extents: "parent",
           }
 
-          setNodes((nds) => nds.concat(newNode))
+          setNodes((nodes) => [...nodes, newNode])
         }
       }
     },
@@ -172,7 +160,6 @@ export default function App() {
             onInit={setReactFlowInstance}
             onDrop={onDrop}
             onDragOver={handleDragOver}
-            fitView
             nodeTypes={nodeTypes}
             minZoom={1}
             maxZoom={isEditing ? 2 : 1}
@@ -181,22 +168,53 @@ export default function App() {
               y: 0,
               zoom: 1,
             }}
-            zoomOnPinch={false}
+            style={{
+              padding: "24px",
+            }}
             panOnDrag={false}
+            panOnScroll={true}
             panOnScrollMode={PanOnScrollMode.Vertical}
             autoPanOnNodeDrag={false}
-            panOnScroll={true}
             zoomOnScroll={false}
+            // onPaneScroll={(event) => {
+            //   console.log(event)
+            // }}
             selectionOnDrag
-            // snapToGrid
             nodeExtent={[
               [0, 0],
               [960, Infinity],
             ]}
+            // snapToGrid
             // fitView
-            // onNodeDragStop={(event, node, nodes) => {
-            //   console.log(event, node)
-            // }}
+            onNodeDragStart={(_event, _node, nodes) => {
+              setCurrentDraggedNode(nodes)
+            }}
+            onNodeDragStop={(_event, _node, nodes) => {
+              const intersectingNodes = nodes.reduce((accumulator, n) => {
+                const intersections = reactFlowInstance?.getIntersectingNodes(
+                  n,
+                  true
+                )
+                if (intersections) {
+                  accumulator.push(...intersections)
+                }
+                return accumulator
+              }, [] as Node<unknown>[])
+              if (intersectingNodes?.length) {
+                // console.log(intersectingNodes, currentDraggedNodes)
+                setNodes((nodes) => {
+                  currentDraggedNodes?.forEach((draggedNode) => {
+                    const nodeIndex = nodes.findIndex(
+                      (node) => node.id === draggedNode.id
+                    )
+                    nodes.splice(nodeIndex, 1, draggedNode)
+                  })
+                  console.log(nodes)
+                  return [...nodes]
+                })
+              }
+              setCurrentDraggedNode(undefined)
+            }}
           >
             {isEditing && (
               <>
