@@ -7,22 +7,16 @@ import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
 } from "reactflow"
-import type {Node} from "reactflow"
+import type {Node, NodeDragHandler} from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
 import BarChartNode from "./components/BarChartNode"
 
-import {
-  DragEventHandler,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
 
 import "reactflow/dist/style.css"
 import "./App.scss"
 import {Sidebar} from "./Sidebar"
+import ParentNode from "./components/ParentNode"
 
 const chartData = [
   {
@@ -56,12 +50,27 @@ const chartData = [
     "The Pragmatic Engineer": 1726,
   },
 ]
+
+const DASHBOARD_CREATOR_COORDINATES = {
+  width: 960,
+  height: 1080,
+}
 let id = 0
 const getId = () => `dndnode_${id++}`
 
 const initialNodes = [
   {
     id: getId(),
+    type: "ParentNode",
+    position: {x: 0, y: 0},
+    style: {
+      width: DASHBOARD_CREATOR_COORDINATES.width,
+      height: DASHBOARD_CREATOR_COORDINATES.height,
+    },
+  },
+  {
+    id: getId(),
+    parentNode: "dndnode_0",
     position: {x: 0, y: 0},
     data: {
       isLocked: false,
@@ -70,10 +79,11 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    // extent: "parent",
+    extent: "parent",
   },
   {
     id: getId(),
+    parentNode: "dndnode_0",
     position: {x: 0, y: 320},
     expandParent: true,
     data: {
@@ -83,7 +93,7 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    // extent: "parent",
+    extent: "parent",
   },
 ]
 
@@ -99,6 +109,7 @@ export default function App() {
     () => ({
       AreaChartNode,
       BarChartNode,
+      ParentNode,
     }),
     []
   )
@@ -123,6 +134,7 @@ export default function App() {
 
           const newNode = {
             id: getId(),
+            parentNode: "dndnode_0",
             type,
             position,
             data: {
@@ -132,6 +144,8 @@ export default function App() {
             },
             deletable: true,
             isLocked: false,
+            expandParent: true,
+            extent: "parent",
           }
 
           setNodes((nodes) => [...nodes, newNode])
@@ -146,6 +160,30 @@ export default function App() {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = "move"
     }
+  }
+
+  const handleNodeDragStop: NodeDragHandler = (_event, _node, nodes) => {
+    const draggedAndIntersectingNodes = nodes.reduce((accumulator, n) => {
+      const intersections = reactFlowInstance?.getIntersectingNodes(n, true)
+
+      if (intersections) {
+        intersections.shift()
+        accumulator.push(...intersections)
+      }
+      return accumulator
+    }, [] as Node<unknown>[])
+    if (draggedAndIntersectingNodes?.length) {
+      setNodes((nodes) => {
+        currentDraggedNodes?.forEach((draggedNode) => {
+          const nodeIndex = nodes.findIndex(
+            (node) => node.id === draggedNode.id
+          )
+          nodes.splice(nodeIndex, 1, draggedNode)
+        })
+        return [...nodes]
+      })
+    }
+    setCurrentDraggedNode(undefined)
   }
 
   return (
@@ -172,7 +210,7 @@ export default function App() {
               padding: "24px",
             }}
             panOnDrag={false}
-            panOnScroll={true}
+            panOnScroll={false}
             panOnScrollMode={PanOnScrollMode.Vertical}
             autoPanOnNodeDrag={false}
             zoomOnScroll={false}
@@ -189,32 +227,7 @@ export default function App() {
             onNodeDragStart={(_event, _node, nodes) => {
               setCurrentDraggedNode(nodes)
             }}
-            onNodeDragStop={(_event, _node, nodes) => {
-              const intersectingNodes = nodes.reduce((accumulator, n) => {
-                const intersections = reactFlowInstance?.getIntersectingNodes(
-                  n,
-                  true
-                )
-                if (intersections) {
-                  accumulator.push(...intersections)
-                }
-                return accumulator
-              }, [] as Node<unknown>[])
-              if (intersectingNodes?.length) {
-                // console.log(intersectingNodes, currentDraggedNodes)
-                setNodes((nodes) => {
-                  currentDraggedNodes?.forEach((draggedNode) => {
-                    const nodeIndex = nodes.findIndex(
-                      (node) => node.id === draggedNode.id
-                    )
-                    nodes.splice(nodeIndex, 1, draggedNode)
-                  })
-                  console.log(nodes)
-                  return [...nodes]
-                })
-              }
-              setCurrentDraggedNode(undefined)
-            }}
+            onNodeDragStop={handleNodeDragStop}
           >
             {isEditing && (
               <>

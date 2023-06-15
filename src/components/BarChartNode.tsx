@@ -8,22 +8,10 @@ interface Props {
   isLocked: boolean
 }
 
-const AreaChartNode = memo(({data, id}: Omit<Node<Props>, "position">) => {
-  console.log('--------')
+const BarChartNode = memo(({data, id}: Omit<Node<Props>, "position">) => {
   const dataFormatter = (number: number) => {
     return "$ " + Intl.NumberFormat("us").format(number).toString()
   }
-
-  const size = useDeferredValue(
-    useStore((s) => {
-      const node = s.nodeInternals.get(id) as Node
-
-      return {
-        width: node.width,
-        height: node.height,
-      }
-    })
-  )
 
   return (
     <ResizableNode minHeight={240} minWidth={480} isLocked={data.isLocked}>
@@ -42,4 +30,4 @@ const AreaChartNode = memo(({data, id}: Omit<Node<Props>, "position">) => {
   )
 })
 
-export default AreaChartNode
+export default BarChartNode
