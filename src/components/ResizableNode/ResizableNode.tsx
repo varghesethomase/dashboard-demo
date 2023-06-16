@@ -1,9 +1,13 @@
 import {memo, startTransition, useState} from "react"
 import {
+  NodeResizeControl,
   NodeResizer,
+  ResizeControlVariant,
   ResizeDragEvent,
   ResizeParams,
   ResizeParamsWithDirection,
+  useNodes,
+  useReactFlow,
 } from "reactflow"
 
 import "./resiable-node.scss"
@@ -23,9 +27,30 @@ const ResizableNode = memo(
       height: minHeight,
       width: minWidth,
     })
+    const [originalNodeDimensions, setOriginalNodeDimensions] = useState({})
+    const nodes = useNodes()
+    const {getIntersectingNodes} = useReactFlow()
+
     const handleResizeEnd = (event: ResizeDragEvent, params: ResizeParams) => {
-      // console.log(event, params)
-      //TODO: Prevent resize if the end coordinates overlap with any other existing Node
+      console.log(event, params)
+      const currentNode = nodes.find((node) => node.id === nodeId)
+      console.log(currentNode)
+      if (currentNode) {
+        const intersections = getIntersectingNodes(currentNode, true)
+        intersections.shift()
+        if (intersections.length) {
+          // setNodes((nodes) => {
+          //   currentDraggedNodes?.forEach((draggedNode) => {
+          //     const nodeIndex = nodes.findIndex(
+          //       (node) => node.id === draggedNode.id
+          //     )
+          //     nodes.splice(nodeIndex, 1, draggedNode)
+          //   })
+          //   return [...nodes]
+          // })
+          //TODO: Prevent resize if the end coordinates overlap with any other existing Node
+        }
+      }
     }
 
     const handleResize = (_event: ResizeDragEvent, params: ResizeParams) => {
@@ -35,6 +60,13 @@ const ResizableNode = memo(
         width: params.width,
       })
       // })
+    }
+
+    const handleResizeStart = (
+      _event: ResizeDragEvent,
+      params: ResizeParams
+    ) => {
+      setOriginalNodeDimensions(params)
     }
 
     const handleShouldResize = (
@@ -59,7 +91,8 @@ const ResizableNode = memo(
           minWidth={minWidth}
           isVisible={!isLocked}
           // position="bottom-right"
-          // variant={ResizeControlVariant.Handle}
+          // variant={ResizeControlVariant.Line}
+          onResizeStart={handleResizeStart}
           shouldResize={handleShouldResize}
           onResizeEnd={handleResizeEnd}
           onResize={handleResize}
