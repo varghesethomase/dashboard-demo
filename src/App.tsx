@@ -1,6 +1,4 @@
 import ReactFlow, {
-  Background,
-  BackgroundVariant,
   Controls,
   PanOnScrollMode,
   ReactFlowInstance,
@@ -17,6 +15,7 @@ import "reactflow/dist/style.css"
 import "./App.scss"
 import {Sidebar} from "./Sidebar"
 import ParentNode from "./components/ParentNode/ParentNode"
+import {DASHBOARD_CREATOR_COORDINATES} from "./configs"
 
 const chartData = [
   {
@@ -51,10 +50,6 @@ const chartData = [
   },
 ]
 
-const DASHBOARD_CREATOR_COORDINATES = {
-  width: 960,
-  height: 1080,
-}
 let id = 0
 const getId = () => `dndnode_${id++}`
 
