@@ -164,6 +164,7 @@ export default function App() {
       const intersections = reactFlowInstance?.getIntersectingNodes(n, true)
 
       if (intersections) {
+        // Remove parent node from the intersections
         intersections.shift()
         accumulator.push(...intersections)
       }
@@ -239,9 +240,6 @@ export default function App() {
             autoPanOnNodeDrag={false}
             zoomOnScroll={false}
             zoomOnPinch={false}
-            // onPaneScroll={(event) => {
-            //   console.log(event)
-            // }}
             selectionOnDrag
             nodeExtent={[
               [0, 0],
