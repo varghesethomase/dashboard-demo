@@ -1,7 +1,13 @@
 import {memo, startTransition, useDeferredValue, useState} from "react"
-import {NodeResizer, ResizeDragEvent, ResizeParams} from "reactflow"
+import {
+  NodeResizer,
+  ResizeDragEvent,
+  ResizeParams,
+  ResizeParamsWithDirection,
+} from "reactflow"
 
 import "./resiable-node.scss"
+import {DASHBOARD_CREATOR_COORDINATES} from "../../configs"
 
 interface Props {
   isLocked: boolean
@@ -17,24 +23,36 @@ const ResizableNode = memo(
       width: minWidth,
     })
     const handleResizeEnd = (event: ResizeDragEvent, params: ResizeParams) => {
-      console.log(event, params)
+      // console.log(event, params)
       //TODO: Prevent resize if the end coordinates overlap with any other existing Node
+    }
+
+    const handleResize = (_event: ResizeDragEvent, params: ResizeParams) => {
+      startTransition(() => {
+        setNodeSize({
+          height: params.height,
+          width: params.width,
+        })
+      })
+    }
+
+    const handleShouldResize = (
+      _event: ResizeDragEvent,
+      params: ResizeParamsWithDirection
+    ) => {
+      const newEndXCoordinate = params.x + params.width
+      return (
+        !isLocked && newEndXCoordinate < DASHBOARD_CREATOR_COORDINATES.width
+      )
     }
     return (
       <>
         <NodeResizer
           minHeight={minHeight}
           minWidth={minWidth}
-          shouldResize={() => !isLocked}
-          onResize={(_event, params) => {
-            startTransition(() => {
-              setNodeSize({
-                height: params.height,
-                width: params.width,
-              })
-            })
-          }}
+          shouldResize={handleShouldResize}
           onResizeEnd={handleResizeEnd}
+          onResize={handleResize}
         />
         <div
           className="resizable-node__content-wrapper"
