@@ -25,7 +25,12 @@ const AreaChartNode = memo(({data, id}: Omit<Node<Props>, "position">) => {
   )
 
   return (
-    <ResizableNode minHeight={240} minWidth={480} isLocked={data.isLocked}>
+    <ResizableNode
+      minHeight={240}
+      minWidth={480}
+      isLocked={data.isLocked}
+      nodeId={id}
+    >
       <Card className="h-full">
         <Title className="area-chart-header">Hello world</Title>
         <AreaChart

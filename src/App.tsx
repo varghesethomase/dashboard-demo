@@ -5,7 +5,7 @@ import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
 } from "reactflow"
-import type {Node, NodeDragHandler} from "reactflow"
+import type {Node, NodeChange, NodeDragHandler} from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
 import BarChartNode from "./components/BarChartNode"
 
@@ -183,6 +183,36 @@ export default function App() {
     setCurrentDraggedNode(undefined)
   }
 
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const parsedChanges = changes.map((change) => {
+        if (
+          change.type === "position" &&
+          change.position &&
+          change.positionAbsolute
+        ) {
+          const changedNode = nodes.find((node) => node.id === change.id)
+          if (changedNode?.width) {
+            const newEndXCoordinate = change.position.x + changedNode.width
+            if (newEndXCoordinate > DASHBOARD_CREATOR_COORDINATES.width) {
+              change.position = {
+                x: DASHBOARD_CREATOR_COORDINATES.width - changedNode.width,
+                y: change.position.y,
+              }
+              change.positionAbsolute = {
+                x: DASHBOARD_CREATOR_COORDINATES.width - changedNode.width,
+                y: change.position.y,
+              }
+            }
+          }
+        }
+        return change
+      })
+      onNodesChange(parsedChanges)
+    },
+    [nodes, onNodesChange]
+  )
+
   return (
     <main className="dashboard dndflow">
       <div className="dashboard__editor-wrapper">
@@ -191,7 +221,7 @@ export default function App() {
             ref={reactFlowWrapper}
             className="dashboard__editor"
             nodes={nodes}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onInit={setReactFlowInstance}
             onDrop={onDrop}
             onDragOver={handleDragOver}

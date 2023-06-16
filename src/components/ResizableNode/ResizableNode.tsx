@@ -14,10 +14,11 @@ interface Props {
   children: React.ReactElement
   minHeight: number
   minWidth: number
+  nodeId: string
 }
 
 const ResizableNode = memo(
-  ({isLocked, children, minHeight, minWidth}: Props) => {
+  ({isLocked, children, minHeight, minWidth, nodeId}: Props) => {
     const [nodeSize, setNodeSize] = useState({
       height: minHeight,
       width: minWidth,
@@ -53,6 +54,7 @@ const ResizableNode = memo(
     return (
       <>
         <NodeResizer
+          nodeId={nodeId}
           minHeight={minHeight}
           minWidth={minWidth}
           isVisible={!isLocked}
