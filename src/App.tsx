@@ -16,7 +16,7 @@ import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
 import "reactflow/dist/style.css"
 import "./App.scss"
 import {Sidebar} from "./Sidebar"
-import ParentNode from "./components/ParentNode"
+import ParentNode from "./components/ParentNode/ParentNode"
 
 const chartData = [
   {
@@ -67,6 +67,7 @@ const initialNodes = [
       width: DASHBOARD_CREATOR_COORDINATES.width,
       height: DASHBOARD_CREATOR_COORDINATES.height,
     },
+    draggable: false,
   },
   {
     id: getId(),
@@ -79,13 +80,13 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    extent: "parent",
+    expandParent: true,
+    // extent: "parent",
   },
   {
     id: getId(),
     parentNode: "dndnode_0",
     position: {x: 0, y: 320},
-    expandParent: true,
     data: {
       isLocked: false,
       chartData,
@@ -93,7 +94,8 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    extent: "parent",
+    expandParent: true,
+    // extent: "parent",
   },
 ]
 
@@ -145,7 +147,6 @@ export default function App() {
             deletable: true,
             isLocked: false,
             expandParent: true,
-            extent: "parent",
           }
 
           setNodes((nodes) => [...nodes, newNode])
@@ -206,11 +207,8 @@ export default function App() {
               y: 0,
               zoom: 1,
             }}
-            style={{
-              padding: "24px",
-            }}
             panOnDrag={false}
-            panOnScroll={false}
+            panOnScroll={true}
             panOnScrollMode={PanOnScrollMode.Vertical}
             autoPanOnNodeDrag={false}
             zoomOnScroll={false}
@@ -220,7 +218,7 @@ export default function App() {
             selectionOnDrag
             nodeExtent={[
               [0, 0],
-              [960, Infinity],
+              [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
             ]}
             // snapToGrid
             // fitView
@@ -229,24 +227,6 @@ export default function App() {
             }}
             onNodeDragStop={handleNodeDragStop}
           >
-            {isEditing && (
-              <>
-                <Background
-                  id="1"
-                  gap={8}
-                  color="#f1f1f1"
-                  variant={BackgroundVariant.Lines}
-                />
-                <Background
-                  id="2"
-                  gap={64}
-                  offset={2}
-                  color="#ccc"
-                  variant={BackgroundVariant.Lines}
-                />
-              </>
-            )}
-
             <Controls />
           </ReactFlow>
         </ReactFlowProvider>

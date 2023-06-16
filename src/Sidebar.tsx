@@ -1,7 +1,7 @@
 enum NodeType {
   AreaChart = "AreaChartNode",
   BarChart = "BarChartNode",
-  Normal = "normal",
+  Default = "default",
 }
 export const Sidebar = () => {
   const onDragStart = (
@@ -33,7 +33,7 @@ export const Sidebar = () => {
       </div>
       <div
         className="dndnode output"
-        onDragStart={(event) => onDragStart(event, NodeType.Normal)}
+        onDragStart={(event) => onDragStart(event, NodeType.Default)}
         draggable
       >
         Normal Node
