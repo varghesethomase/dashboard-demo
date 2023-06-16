@@ -64,6 +64,7 @@ const initialNodes = [
     type: "ParentNode",
     position: {x: 0, y: 0},
     style: {
+      maxWidth: DASHBOARD_CREATOR_COORDINATES.width,
       width: DASHBOARD_CREATOR_COORDINATES.width,
       height: DASHBOARD_CREATOR_COORDINATES.height,
     },
@@ -200,7 +201,7 @@ export default function App() {
             onDrop={onDrop}
             onDragOver={handleDragOver}
             nodeTypes={nodeTypes}
-            minZoom={1}
+            minZoom={0.5}
             maxZoom={isEditing ? 2 : 1}
             defaultViewport={{
               x: 0,
@@ -212,6 +213,7 @@ export default function App() {
             panOnScrollMode={PanOnScrollMode.Vertical}
             autoPanOnNodeDrag={false}
             zoomOnScroll={false}
+            zoomOnPinch={false}
             // onPaneScroll={(event) => {
             //   console.log(event)
             // }}
@@ -227,7 +229,7 @@ export default function App() {
             }}
             onNodeDragStop={handleNodeDragStop}
           >
-            <Controls />
+            <Controls showFitView={false} />
           </ReactFlow>
         </ReactFlowProvider>
       </div>
