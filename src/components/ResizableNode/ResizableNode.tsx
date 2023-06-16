@@ -1,6 +1,8 @@
-import {memo, startTransition, useDeferredValue, useState} from "react"
+import {memo, startTransition, useState} from "react"
 import {
+  NodeResizeControl,
   NodeResizer,
+  ResizeControlVariant,
   ResizeDragEvent,
   ResizeParams,
   ResizeParamsWithDirection,
@@ -28,19 +30,24 @@ const ResizableNode = memo(
     }
 
     const handleResize = (_event: ResizeDragEvent, params: ResizeParams) => {
-      startTransition(() => {
-        setNodeSize({
-          height: params.height,
-          width: params.width,
-        })
+      // startTransition(() => {
+      setNodeSize({
+        height: params.height,
+        width: params.width,
       })
+      // })
     }
 
     const handleShouldResize = (
       _event: ResizeDragEvent,
       params: ResizeParamsWithDirection
     ) => {
-      const newEndXCoordinate = params.x + params.width
+      let newEndXCoordinate = 0
+      if (params.x < 0) {
+        newEndXCoordinate = params.width
+      } else {
+        newEndXCoordinate = params.x + params.width
+      }
       return (
         !isLocked && newEndXCoordinate < DASHBOARD_CREATOR_COORDINATES.width
       )
@@ -50,6 +57,9 @@ const ResizableNode = memo(
         <NodeResizer
           minHeight={minHeight}
           minWidth={minWidth}
+          isVisible={!isLocked}
+          // position="bottom-right"
+          // variant={ResizeControlVariant.Handle}
           shouldResize={handleShouldResize}
           onResizeEnd={handleResizeEnd}
           onResize={handleResize}
