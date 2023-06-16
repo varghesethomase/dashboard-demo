@@ -1,7 +1,7 @@
-import {Node, useStore} from "reactflow"
+import {Node} from "reactflow"
 import {AreaChart, Card, Title} from "@tremor/react"
 import ResizableNode from "./ResizableNode/ResizableNode"
-import {memo, useDeferredValue} from "react"
+import {memo} from "react"
 
 interface Props {
   chartData: Record<string, string | number>[]
@@ -12,17 +12,6 @@ const AreaChartNode = memo(({data, id}: Omit<Node<Props>, "position">) => {
   const dataFormatter = (number: number) => {
     return "$ " + Intl.NumberFormat("us").format(number).toString()
   }
-
-  const size = useDeferredValue(
-    useStore((s) => {
-      const node = s.nodeInternals.get(id) as Node
-
-      return {
-        width: node.width,
-        height: node.height,
-      }
-    })
-  )
 
   return (
     <ResizableNode
