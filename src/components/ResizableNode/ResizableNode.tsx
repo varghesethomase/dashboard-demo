@@ -1,8 +1,6 @@
 import {memo, startTransition, useState} from "react"
 import {
-  NodeResizeControl,
   NodeResizer,
-  ResizeControlVariant,
   ResizeDragEvent,
   ResizeParams,
   ResizeParamsWithDirection,
