@@ -16,6 +16,7 @@ import "./App.scss"
 import {Sidebar} from "./Sidebar"
 import ParentNode from "./components/ParentNode/ParentNode"
 import {DASHBOARD_CREATOR_COORDINATES} from "./configs"
+import {RecoilRoot} from "recoil"
 
 const chartData = [
   {
@@ -215,49 +216,51 @@ export default function App() {
   )
 
   return (
-    <main className="dashboard dndflow">
-      <div className="dashboard__editor-wrapper">
-        <ReactFlowProvider>
-          <ReactFlow
-            ref={reactFlowWrapper}
-            className="dashboard__editor"
-            nodes={nodes}
-            onNodesChange={handleNodesChange}
-            onInit={setReactFlowInstance}
-            onDrop={onDrop}
-            onDragOver={handleDragOver}
-            nodeTypes={nodeTypes}
-            minZoom={0.5}
-            maxZoom={isEditing ? 2 : 1}
-            defaultViewport={{
-              x: 0,
-              y: 0,
-              zoom: 1,
-            }}
-            panOnDrag={false}
-            panOnScroll={true}
-            panOnScrollMode={PanOnScrollMode.Vertical}
-            autoPanOnNodeDrag={false}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
-            selectionOnDrag
-            nodeExtent={[
-              [0, 0],
-              [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
-            ]}
-            // snapToGrid
-            // fitView
-            onNodeDragStart={(_event, _node, nodes) => {
-              setCurrentDraggedNode(nodes)
-            }}
-            onNodeDragStop={handleNodeDragStop}
-          >
-            <Controls showFitView={false} />
-          </ReactFlow>
-        </ReactFlowProvider>
-      </div>
+    <RecoilRoot>
+      <main className="dashboard dndflow">
+        <div className="dashboard__editor-wrapper">
+          <ReactFlowProvider>
+            <ReactFlow
+              ref={reactFlowWrapper}
+              className="dashboard__editor"
+              nodes={nodes}
+              onNodesChange={handleNodesChange}
+              onInit={setReactFlowInstance}
+              onDrop={onDrop}
+              onDragOver={handleDragOver}
+              nodeTypes={nodeTypes}
+              minZoom={0.5}
+              maxZoom={isEditing ? 2 : 1}
+              defaultViewport={{
+                x: 0,
+                y: 0,
+                zoom: 1,
+              }}
+              panOnDrag={false}
+              panOnScroll={true}
+              panOnScrollMode={PanOnScrollMode.Vertical}
+              autoPanOnNodeDrag={false}
+              zoomOnScroll={false}
+              zoomOnPinch={false}
+              selectionOnDrag
+              nodeExtent={[
+                [0, 0],
+                [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
+              ]}
+              // snapToGrid
+              // fitView
+              onNodeDragStart={(_event, _node, nodes) => {
+                setCurrentDraggedNode(nodes)
+              }}
+              onNodeDragStop={handleNodeDragStop}
+            >
+              <Controls showFitView={false} />
+            </ReactFlow>
+          </ReactFlowProvider>
+        </div>
 
-      <Sidebar />
-    </main>
+        <Sidebar />
+      </main>
+    </RecoilRoot>
   )
 }
