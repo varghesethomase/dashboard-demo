@@ -1,8 +1,6 @@
-import {memo, startTransition, useState} from "react"
+import {memo, startTransition, useCallback, useState} from "react"
 import {
-  NodeResizeControl,
   NodeResizer,
-  ResizeControlVariant,
   ResizeDragEvent,
   ResizeParams,
   ResizeParamsWithDirection,
@@ -12,6 +10,16 @@ import {
 
 import "./resiable-node.scss"
 import {DASHBOARD_CREATOR_COORDINATES} from "../../configs"
+import {atom, useRecoilState} from "recoil"
+import {flushSync} from "react-dom"
+
+const originalNodeDimensions = atom<ResizeParams | object>({
+  key: "nodeDimensions",
+  default: {
+    x: 100,
+    y: 300,
+  },
+})
 
 interface Props {
   isLocked: boolean
@@ -27,47 +35,43 @@ const ResizableNode = memo(
       height: minHeight,
       width: minWidth,
     })
-    const [originalNodeDimensions, setOriginalNodeDimensions] = useState({})
     const nodes = useNodes()
-    const {getIntersectingNodes} = useReactFlow()
+    const nodeIndex = nodes.findIndex((node) => node.id === nodeId)
+    const currentNode = nodes[nodeIndex]
+
+    const {getIntersectingNodes, setNodes} = useReactFlow()
 
     const handleResizeEnd = (event: ResizeDragEvent, params: ResizeParams) => {
-      console.log(event, params)
-      const currentNode = nodes.find((node) => node.id === nodeId)
-      console.log(currentNode)
+      // TODO: Check with the team if its an issue that the function does not have access to latest values in the component
       if (currentNode) {
         const intersections = getIntersectingNodes(currentNode, true)
         intersections.shift()
         if (intersections.length) {
-          // setNodes((nodes) => {
-          //   currentDraggedNodes?.forEach((draggedNode) => {
-          //     const nodeIndex = nodes.findIndex(
-          //       (node) => node.id === draggedNode.id
-          //     )
-          //     nodes.splice(nodeIndex, 1, draggedNode)
-          //   })
-          //   return [...nodes]
-          // })
-          //TODO: Prevent resize if the end coordinates overlap with any other existing Node
+          setNodes((nodes) => {
+            const newNode = {
+              ...currentNode,
+              width: nodeSize.width,
+              height: nodeSize.height,
+            }
+            nodes.splice(nodeIndex, 1, newNode)
+            setNodeSize(nodeSize)
+            return [...nodes]
+          })
         }
       }
     }
 
-    const handleResize = (_event: ResizeDragEvent, params: ResizeParams) => {
-      // startTransition(() => {
-      setNodeSize({
-        height: params.height,
-        width: params.width,
-      })
-      // })
-    }
-
-    const handleResizeStart = (
-      _event: ResizeDragEvent,
-      params: ResizeParams
-    ) => {
-      setOriginalNodeDimensions(params)
-    }
+    const handleResize = useCallback(
+      (_event: ResizeDragEvent, params: ResizeParams) => {
+        startTransition(() => {
+          setNodeSize({
+            height: params.height,
+            width: params.width,
+          })
+        })
+      },
+      []
+    )
 
     const handleShouldResize = (
       _event: ResizeDragEvent,
@@ -92,7 +96,7 @@ const ResizableNode = memo(
           isVisible={!isLocked}
           // position="bottom-right"
           // variant={ResizeControlVariant.Line}
-          onResizeStart={handleResizeStart}
+          // onResizeStart={handleResizeStart}
           shouldResize={handleShouldResize}
           onResizeEnd={handleResizeEnd}
           onResize={handleResize}
