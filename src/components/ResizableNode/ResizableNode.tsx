@@ -10,16 +10,6 @@ import {
 
 import "./resiable-node.scss"
 import {DASHBOARD_CREATOR_COORDINATES} from "../../configs"
-import {atom, useRecoilState} from "recoil"
-import {flushSync} from "react-dom"
-
-const originalNodeDimensions = atom<ResizeParams | object>({
-  key: "nodeDimensions",
-  default: {
-    x: 100,
-    y: 300,
-  },
-})
 
 interface Props {
   isLocked: boolean
@@ -38,14 +28,11 @@ const ResizableNode = memo(
     const nodes = useNodes()
     const nodeIndex = nodes.findIndex((node) => node.id === nodeId)
     const currentNode = nodes[nodeIndex]
-
     const {getIntersectingNodes, setNodes} = useReactFlow()
 
-    const handleResizeEnd = (event: ResizeDragEvent, params: ResizeParams) => {
-      // TODO: Check with the team if its an issue that the function does not have access to latest values in the component
+    const handleResizeEnd = useCallback(() => {
       if (currentNode) {
         const intersections = getIntersectingNodes(currentNode, true)
-        intersections.shift()
         if (intersections.length) {
           setNodes((nodes) => {
             const newNode = {
@@ -59,44 +46,44 @@ const ResizableNode = memo(
           })
         }
       }
-    }
+    }, [currentNode, getIntersectingNodes, nodeIndex, nodeSize, setNodes])
 
     const handleResize = useCallback(
       (_event: ResizeDragEvent, params: ResizeParams) => {
-        startTransition(() => {
-          setNodeSize({
-            height: params.height,
-            width: params.width,
-          })
+        // startTransition(() => {
+
+        setNodeSize({
+          height: params.height,
+          width: params.width,
         })
+        // })
       },
       []
     )
 
-    const handleShouldResize = (
-      _event: ResizeDragEvent,
-      params: ResizeParamsWithDirection
-    ) => {
-      let newEndXCoordinate = 0
-      if (params.x < 0) {
-        newEndXCoordinate = params.width
-      } else {
-        newEndXCoordinate = params.x + params.width
-      }
-      return (
-        !isLocked && newEndXCoordinate < DASHBOARD_CREATOR_COORDINATES.width
-      )
-    }
+    const handleShouldResize = useCallback(
+      (_event: ResizeDragEvent, params: ResizeParamsWithDirection) => {
+        let newEndXCoordinate = 0
+        if (params.x < 0) {
+          newEndXCoordinate = params.width
+        } else {
+          newEndXCoordinate = params.x + params.width
+        }
+        return (
+          !isLocked && newEndXCoordinate < DASHBOARD_CREATOR_COORDINATES.width
+        )
+      },
+      [isLocked]
+    )
     return (
       <>
         <NodeResizer
           nodeId={nodeId}
-          minHeight={minHeight}
-          minWidth={minWidth}
+          minHeight={nodeSize.height || minHeight}
+          minWidth={nodeSize.width || minWidth}
           isVisible={!isLocked}
           // position="bottom-right"
           // variant={ResizeControlVariant.Line}
-          // onResizeStart={handleResizeStart}
           shouldResize={handleShouldResize}
           onResizeEnd={handleResizeEnd}
           onResize={handleResize}
