@@ -1,4 +1,6 @@
 import ReactFlow, {
+  Background,
+  BackgroundVariant,
   Controls,
   PanOnScrollMode,
   ReactFlowInstance,
@@ -161,6 +163,7 @@ export default function App() {
   }
 
   const handleNodeDragStop: NodeDragHandler = (_event, _node, nodes) => {
+    console.log("%cApp.tsx line:164 object", "color: #007acc;")
     const draggedAndIntersectingNodes = nodes.reduce((accumulator, n) => {
       const intersections = reactFlowInstance?.getIntersectingNodes(n, true)
 
@@ -247,7 +250,7 @@ export default function App() {
                 [0, 0],
                 [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
               ]}
-              // snapToGrid
+              snapToGrid
               // fitView
               onNodeDragStart={(_event, _node, nodes) => {
                 setCurrentDraggedNode(nodes)
@@ -255,6 +258,7 @@ export default function App() {
               onNodeDragStop={handleNodeDragStop}
             >
               <Controls showFitView={false} />
+              <Background variant={BackgroundVariant.Dots} />
             </ReactFlow>
           </ReactFlowProvider>
         </div>
