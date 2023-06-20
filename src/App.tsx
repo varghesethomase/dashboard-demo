@@ -17,8 +17,8 @@ import "reactflow/dist/style.css"
 import "./App.scss"
 import {Sidebar} from "./Sidebar"
 import {DASHBOARD_CREATOR_COORDINATES, GRID_GAP} from "./configs"
-import {useRecoilState} from "recoil"
-import {dashboardCanvasHeight} from "./store"
+import {useRecoilState, useRecoilValue} from "recoil"
+import {dashboardCanvasHeight, gridGap} from "./store"
 
 const chartData = [
   {
@@ -89,6 +89,7 @@ export default function App() {
     useState<ReactFlowInstance>()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const [canvasHeight, setCanvasHeight] = useRecoilState(dashboardCanvasHeight)
+  const gap = useRecoilValue(gridGap)
 
   const nodeTypes = useMemo(
     () => ({
@@ -201,7 +202,6 @@ export default function App() {
               farthestNode = nodes[i]
             }
           }
-          console.log(farthestNode)
           const farthestEndYCoordinate =
             farthestNode.position.y + Number(farthestNode.height)
           if (farthestEndYCoordinate > DASHBOARD_CREATOR_COORDINATES.height) {
@@ -216,7 +216,6 @@ export default function App() {
     },
     [nodes, onNodesChange, setCanvasHeight]
   )
-
   return (
     <main className="dashboard dndflow">
       <div className="dashboard__editor-wrapper">
@@ -262,7 +261,7 @@ export default function App() {
             ]}
           >
             <Controls showFitView={false} showZoom={isEditing ?? false} />
-            <Background variant={BackgroundVariant.Dots} gap={GRID_GAP} />
+            <Background variant={BackgroundVariant.Dots} gap={gap} />
           </ReactFlow>
         </ReactFlowProvider>
       </div>

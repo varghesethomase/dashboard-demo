@@ -6,7 +6,7 @@ export const dashboardCanvasHeight = atom({
   default: DASHBOARD_CREATOR_COORDINATES.height,
 })
 
-export const gridSize = atom({
-  key: "GridSize",
+export const gridGap = atom({
+  key: "GridGap",
   default: GRID_GAP,
 })

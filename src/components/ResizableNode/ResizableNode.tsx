@@ -1,4 +1,4 @@
-import {memo, startTransition, useCallback, useState} from "react"
+import {memo, useCallback, useState} from "react"
 import {
   NodeResizer,
   ResizeDragEvent,
