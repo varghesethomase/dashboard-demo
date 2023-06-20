@@ -16,9 +16,9 @@ import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
 import "reactflow/dist/style.css"
 import "./App.scss"
 import {Sidebar} from "./Sidebar"
-import ParentNode from "./components/ParentNode/ParentNode"
-import {DASHBOARD_CREATOR_COORDINATES} from "./configs"
-import {RecoilRoot} from "recoil"
+import {DASHBOARD_CREATOR_COORDINATES, GRID_GAP} from "./configs"
+import {useRecoilState} from "recoil"
+import {dashboardCanvasHeight} from "./store"
 
 const chartData = [
   {
@@ -59,18 +59,6 @@ const getId = () => `dndnode_${id++}`
 const initialNodes = [
   {
     id: getId(),
-    type: "ParentNode",
-    position: {x: 0, y: 0},
-    style: {
-      maxWidth: DASHBOARD_CREATOR_COORDINATES.width,
-      width: DASHBOARD_CREATOR_COORDINATES.width,
-      height: DASHBOARD_CREATOR_COORDINATES.height,
-    },
-    draggable: false,
-  },
-  {
-    id: getId(),
-    parentNode: "dndnode_0",
     position: {x: 0, y: 0},
     data: {
       isLocked: false,
@@ -79,12 +67,9 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    expandParent: true,
-    // extent: "parent",
   },
   {
     id: getId(),
-    parentNode: "dndnode_0",
     position: {x: 0, y: 320},
     data: {
       isLocked: false,
@@ -93,8 +78,6 @@ const initialNodes = [
     type: "AreaChartNode",
     deletable: true,
     isLocked: false,
-    expandParent: true,
-    // extent: "parent",
   },
 ]
 
@@ -105,12 +88,12 @@ export default function App() {
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance>()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const [canvasHeight, setCanvasHeight] = useRecoilState(dashboardCanvasHeight)
 
   const nodeTypes = useMemo(
     () => ({
       AreaChartNode,
       BarChartNode,
-      ParentNode,
     }),
     []
   )
@@ -145,7 +128,6 @@ export default function App() {
             },
             deletable: true,
             isLocked: false,
-            expandParent: true,
           }
 
           setNodes((nodes) => [...nodes, newNode])
@@ -163,13 +145,10 @@ export default function App() {
   }
 
   const handleNodeDragStop: NodeDragHandler = (_event, _node, nodes) => {
-    console.log("%cApp.tsx line:164 object", "color: #007acc;")
     const draggedAndIntersectingNodes = nodes.reduce((accumulator, n) => {
       const intersections = reactFlowInstance?.getIntersectingNodes(n, true)
 
       if (intersections) {
-        // Remove parent node from the intersections
-        intersections.shift()
         accumulator.push(...intersections)
       }
       return accumulator
@@ -196,6 +175,7 @@ export default function App() {
           change.position &&
           change.positionAbsolute
         ) {
+          // Prevents drag along the X coordinate
           const changedNode = nodes.find((node) => node.id === change.id)
           if (changedNode?.width) {
             const newEndXCoordinate = change.position.x + changedNode.width
@@ -211,60 +191,83 @@ export default function App() {
             }
           }
         }
+        if (nodes) {
+          let farthestNode = nodes[0]
+          for (let i = 1; i < nodes.length; i += 1) {
+            const endYCoordinate = nodes[i].position.y + Number(nodes[i].height)
+            const currentFarthestEndCoordinate =
+              farthestNode.position.y + Number(farthestNode.height)
+            if (endYCoordinate > currentFarthestEndCoordinate) {
+              farthestNode = nodes[i]
+            }
+          }
+          console.log(farthestNode)
+          const farthestEndYCoordinate =
+            farthestNode.position.y + Number(farthestNode.height)
+          if (farthestEndYCoordinate > DASHBOARD_CREATOR_COORDINATES.height) {
+            setCanvasHeight(farthestEndYCoordinate)
+          } else {
+            setCanvasHeight(DASHBOARD_CREATOR_COORDINATES.height)
+          }
+        }
         return change
       })
       onNodesChange(parsedChanges)
     },
-    [nodes, onNodesChange]
+    [nodes, onNodesChange, setCanvasHeight]
   )
 
   return (
-    <RecoilRoot>
-      <main className="dashboard dndflow">
-        <div className="dashboard__editor-wrapper">
-          <ReactFlowProvider>
-            <ReactFlow
-              ref={reactFlowWrapper}
-              className="dashboard__editor"
-              nodes={nodes}
-              onNodesChange={handleNodesChange}
-              onInit={setReactFlowInstance}
-              onDrop={onDrop}
-              onDragOver={handleDragOver}
-              nodeTypes={nodeTypes}
-              minZoom={0.5}
-              maxZoom={isEditing ? 2 : 1}
-              defaultViewport={{
-                x: 0,
-                y: 0,
-                zoom: 1,
-              }}
-              panOnDrag={false}
-              panOnScroll={true}
-              panOnScrollMode={PanOnScrollMode.Vertical}
-              autoPanOnNodeDrag={false}
-              zoomOnScroll={false}
-              zoomOnPinch={false}
-              selectionOnDrag
-              nodeExtent={[
-                [0, 0],
-                [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
-              ]}
-              snapToGrid
-              // fitView
-              onNodeDragStart={(_event, _node, nodes) => {
-                setCurrentDraggedNode(nodes)
-              }}
-              onNodeDragStop={handleNodeDragStop}
-            >
-              <Controls showFitView={false} />
-              <Background variant={BackgroundVariant.Dots} />
-            </ReactFlow>
-          </ReactFlowProvider>
-        </div>
+    <main className="dashboard dndflow">
+      <div className="dashboard__editor-wrapper">
+        <ReactFlowProvider>
+          <ReactFlow
+            ref={reactFlowWrapper}
+            className="dashboard__editor"
+            nodes={nodes}
+            onNodesChange={handleNodesChange}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={handleDragOver}
+            nodeTypes={nodeTypes}
+            minZoom={1}
+            maxZoom={isEditing ? 2 : 1}
+            defaultViewport={{
+              x: 0,
+              y: 0,
+              zoom: 1,
+            }}
+            panOnDrag={true}
+            panOnScroll={true}
+            panOnScrollMode={PanOnScrollMode.Vertical}
+            panActivationKeyCode={null}
+            zoomActivationKeyCode={null}
+            autoPanOnNodeDrag={true}
+            zoomOnScroll={false}
+            zoomOnPinch={false}
+            zoomOnDoubleClick={false}
+            selectionOnDrag
+            nodeExtent={[
+              [0, 0],
+              [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
+            ]}
+            snapToGrid
+            onNodeDragStart={(_event, _node, nodes) => {
+              setCurrentDraggedNode(nodes)
+            }}
+            onNodeDragStop={handleNodeDragStop}
+            translateExtent={[
+              [0, 0],
+              [960, canvasHeight],
+            ]}
+          >
+            <Controls showFitView={false} showZoom={isEditing ?? false} />
+            <Background variant={BackgroundVariant.Dots} gap={GRID_GAP} />
+          </ReactFlow>
+        </ReactFlowProvider>
+      </div>
 
-        <Sidebar />
-      </main>
-    </RecoilRoot>
+      <Sidebar />
+    </main>
   )
 }
