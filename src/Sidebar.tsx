@@ -16,13 +16,8 @@ export const Sidebar = () => {
     event.dataTransfer.setData("application/reactflow", nodeType)
     event.dataTransfer.effectAllowed = "move"
   }
-  const handleGapChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value)
-    if (event.target.value !== "") {
-      setGridGap(parseInt(event.target.value, 0))
-    } else {
-      setGridGap(GRID_GAP)
-    }
+  const handleGapChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setGridGap(parseInt(event.target.value, 0))
   }
 
   return (
@@ -54,11 +49,11 @@ export const Sidebar = () => {
       <label>
         Grid Gap
         <div>
-          <input
-            placeholder="Enter grid gap"
-            onChange={handleGapChange}
-            defaultValue={gap}
-          />
+          <select defaultValue={gap} onChange={handleGapChange}>
+            <option value={8}>8</option>
+            <option value={12}>12</option>
+            <option value={16}>16</option>
+          </select>
         </div>
       </label>
     </aside>
