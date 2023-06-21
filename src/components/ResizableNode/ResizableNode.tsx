@@ -1,11 +1,11 @@
-import {memo, useCallback, useState} from "react"
+import {memo, useCallback} from "react"
 import {
   NodeResizer,
   ResizeDragEvent,
-  ResizeParams,
   ResizeParamsWithDirection,
-  useNodes,
   useReactFlow,
+  useStore,
+  Node,
 } from "reactflow"
 
 import "./resiable-node.scss"
@@ -21,45 +21,11 @@ interface Props {
 
 const ResizableNode = memo(
   ({isLocked, children, minHeight, minWidth, nodeId}: Props) => {
-    const [nodeSize, setNodeSize] = useState({
-      height: minHeight,
-      width: minWidth,
-    })
-    const nodes = useNodes()
+    const {getIntersectingNodes, setNodes, getNodes} = useReactFlow()
+    const nodes = getNodes()
+
     const nodeIndex = nodes.findIndex((node) => node.id === nodeId)
     const currentNode = nodes[nodeIndex]
-    const {getIntersectingNodes, setNodes} = useReactFlow()
-
-    const handleResizeEnd = useCallback(() => {
-      if (currentNode) {
-        const intersections = getIntersectingNodes(currentNode, true)
-        if (intersections.length) {
-          setNodes((nodes) => {
-            const newNode = {
-              ...currentNode,
-              width: nodeSize.width,
-              height: nodeSize.height,
-            }
-            nodes.splice(nodeIndex, 1, newNode)
-            setNodeSize(nodeSize)
-            return [...nodes]
-          })
-        }
-      }
-    }, [currentNode, getIntersectingNodes, nodeIndex, nodeSize, setNodes])
-
-    const handleResize = useCallback(
-      (_event: ResizeDragEvent, params: ResizeParams) => {
-        // startTransition(() => {
-
-        setNodeSize({
-          height: params.height,
-          width: params.width,
-        })
-        // })
-      },
-      []
-    )
 
     const handleShouldResize = useCallback(
       (_event: ResizeDragEvent, params: ResizeParamsWithDirection) => {
@@ -70,29 +36,62 @@ const ResizableNode = memo(
           newEndXCoordinate = params.x + params.width
         }
         return (
-          !isLocked && newEndXCoordinate < DASHBOARD_CREATOR_COORDINATES.width
+          !isLocked &&
+          newEndXCoordinate < DASHBOARD_CREATOR_COORDINATES.width + 2 // The additional 2 represents the border
         )
       },
       [isLocked]
     )
+
+    const size = useStore((s) => {
+      const n = s.nodeInternals.get(nodeId) as Node
+
+      return {
+        width: n.width,
+        height: n.height,
+      }
+    })
+
+    const handleResizeEnd = useCallback(() => {
+      if (currentNode) {
+        const intersections = getIntersectingNodes(currentNode, true)
+        if (intersections.length) {
+          setNodes((nodes) => {
+            const newNode = {
+              ...currentNode,
+              width: size.width,
+              height: size.height,
+            }
+            nodes.splice(nodeIndex, 1, newNode)
+            return [...nodes]
+          })
+        }
+      }
+    }, [
+      currentNode,
+      getIntersectingNodes,
+      nodeIndex,
+      setNodes,
+      size.height,
+      size.width,
+    ])
+
     return (
       <>
         <NodeResizer
-          nodeId={nodeId}
-          minHeight={nodeSize.height || minHeight}
-          minWidth={nodeSize.width || minWidth}
+          minHeight={minHeight}
+          minWidth={minWidth}
           isVisible={!isLocked}
-          // position="bottom-right"
-          // variant={ResizeControlVariant.Line}
           shouldResize={handleShouldResize}
           onResizeEnd={handleResizeEnd}
-          onResize={handleResize}
         />
         <div
           className="resizable-node__content-wrapper"
           style={{
-            height: nodeSize.height,
-            width: nodeSize.width,
+            minHeight: minHeight,
+            minWidth: minWidth,
+            height: size.height ?? minHeight,
+            width: size.width ?? minWidth,
           }}
         >
           {children}
