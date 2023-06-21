@@ -16,7 +16,7 @@ const AreaChartNode = memo(({data, id}: Omit<Node<Props>, "position">) => {
   return (
     <ResizableNode
       minHeight={240}
-      minWidth={480}
+      minWidth={400}
       isLocked={data.isLocked}
       nodeId={id}
     >

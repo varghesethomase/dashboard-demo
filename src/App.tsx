@@ -7,7 +7,7 @@ import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
 } from "reactflow"
-import type {Node, NodeChange, NodeDragHandler} from "reactflow"
+import type {Node, NodeChange, NodeDragHandler, ProOptions} from "reactflow"
 import AreaChartNode from "./components/AreaChartNode"
 import BarChartNode from "./components/BarChartNode"
 
@@ -19,6 +19,10 @@ import {Sidebar} from "./Sidebar"
 import {DASHBOARD_CREATOR_COORDINATES, GRID_GAP} from "./configs"
 import {useRecoilState, useRecoilValue} from "recoil"
 import {dashboardCanvasHeight, gridGap} from "./store"
+import getHelperLines from "./utils/getHelperLines"
+import HelperLines from "./components/HelperLines"
+
+const proOptions: ProOptions = {account: "paid-pro", hideAttribution: true}
 
 const chartData = [
   {
@@ -87,6 +91,12 @@ export default function App() {
     useState<Node<unknown>[]>()
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance>()
+  const [helperLineHorizontal, setHelperLineHorizontal] = useState<
+    number | undefined
+  >(undefined)
+  const [helperLineVertical, setHelperLineVertical] = useState<
+    number | undefined
+  >(undefined)
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const [canvasHeight, setCanvasHeight] = useRecoilState(dashboardCanvasHeight)
   const gap = useRecoilValue(gridGap)
@@ -172,6 +182,25 @@ export default function App() {
     (changes: NodeChange[]) => {
       const parsedChanges = changes.map((change) => {
         if (
+          changes.length === 1 &&
+          changes[0].type === "position" &&
+          changes[0].dragging &&
+          changes[0].position
+        ) {
+          const helperLines = getHelperLines(changes[0], nodes)
+
+          // if we have a helper line, we snap the node to the helper line position
+          // this is being done by manipulating the node position inside the change object
+          changes[0].position.x =
+            helperLines.snapPosition.x ?? changes[0].position.x
+          changes[0].position.y =
+            helperLines.snapPosition.y ?? changes[0].position.y
+
+          // if helper lines are returned, we set them so that they can be displayed
+          setHelperLineHorizontal(helperLines.horizontal)
+          setHelperLineVertical(helperLines.vertical)
+        }
+        if (
           change.type === "position" &&
           change.position &&
           change.positionAbsolute
@@ -192,6 +221,7 @@ export default function App() {
             }
           }
         }
+        // Enable auto resize of the canvas
         if (nodes) {
           let farthestNode = nodes[0]
           for (let i = 1; i < nodes.length; i += 1) {
@@ -257,15 +287,19 @@ export default function App() {
             onNodeDragStop={handleNodeDragStop}
             translateExtent={[
               [0, 0],
-              [960, canvasHeight],
+              [DASHBOARD_CREATOR_COORDINATES.width, canvasHeight],
             ]}
+            proOptions={proOptions}
           >
             <Controls showFitView={false} showZoom={isEditing ?? false} />
             <Background variant={BackgroundVariant.Dots} gap={gap} />
+            <HelperLines
+              horizontal={helperLineHorizontal}
+              vertical={helperLineVertical}
+            />
           </ReactFlow>
         </ReactFlowProvider>
       </div>
-
       <Sidebar />
     </main>
   )
