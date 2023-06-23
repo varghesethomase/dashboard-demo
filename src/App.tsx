@@ -1,60 +1,30 @@
-import {
-  useDeferredValue,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
-import {MuuriComponent, useDraggable, useGrid, useRefresh} from "muuri-react"
-import {AreaChart, Card, Title} from "@tremor/react"
-import {ResizableBox} from "react-resizable"
-import {generateItems} from "./utils"
-import Muuri from "muuri"
+import ReactFlow, {
+  Background,
+  BackgroundVariant,
+  Controls,
+  PanOnScrollMode,
+  ReactFlowInstance,
+  ReactFlowProvider,
+  useNodesState,
+} from "reactflow"
+import type {Node, NodeChange, NodeDragHandler, ProOptions} from "reactflow"
+import AreaChartNode from "./components/AreaChartNode"
+import BarChartNode from "./components/BarChartNode"
 
-import "./App.css"
+import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
 
-export const ResizableWrapper = (Component, {width, height}) => {
-  // Return the wrapped resizable component.
-  return function WrappedComponent(props) {
-    // Muuri-react provides all the tools to manage scaling.
-    // You can implement it however you want.
-    const ref = useRef()
-    const refresh = useRefresh()
-    const {grid} = useGrid()
-    // Get the best performance with debouncing.
-    // It is not mandatory to use.
-    const refreshWithdebounce = useDeferredValue(() =>
-      requestAnimationFrame(refresh)
-    )
-    return (
-      <div
-        ref={ref}
-        className="item"
-        style={{width: `${width}px`, height: `${height}px`}}
-      >
-        <div>
-          <ResizableBox
-            draggableOpts={{grid: [8, 8]}}
-            width={width}
-            height={height}
-            minConstraints={[width, height]}
-            onResize={(_, {size}) => {
-              ref.current.style.width = size.width + "px"
-              ref.current.style.height = size.height + "px"
+import "reactflow/dist/style.css"
+import "./App.scss"
+import {Sidebar} from "./Sidebar"
+import {DASHBOARD_CREATOR_COORDINATES} from "./configs"
+import {useRecoilState, useRecoilValue} from "recoil"
+import {dashboardCanvasHeight, gridGap} from "./store"
+import getHelperLines from "./utils/getHelperLines"
+import HelperLines from "./components/HelperLines"
 
-              refreshWithdebounce()
-            }}
-            axis={props.isLocked ? "none" : "both"}
-          >
-            <Component {...props} />
-          </ResizableBox>
-        </div>
-      </div>
-    )
-  }
-}
+const proOptions: ProOptions = {account: "paid-pro", hideAttribution: true}
 
-const chartdata = [
+const chartData = [
   {
     date: "Jan 22",
     SemiAnalysis: 2890,
@@ -87,99 +57,230 @@ const chartdata = [
   },
 ]
 
-const dataFormatter = (number: number) => {
-  return "$ " + Intl.NumberFormat("us").format(number).toString()
-}
+let id = 0
+const getId = () => `dndnode_${id++}`
 
-export const AreaChartGraph = ResizableWrapper(
-  (props) => {
-    const setDraggable = useDraggable()
-    if (props.isLocked) {
-      setDraggable(false)
-    }
-    return (
-      <Card
-        className="h-full"
-        style={{
-          border: props.isLocked ? "1px solid blue" : "1px solid green",
-        }}
-      >
-        <Title className="area-chart-header">Hello world {props.id}</Title>
-        <AreaChart
-          className="h-full"
-          data={chartdata}
-          index="date"
-          categories={["SemiAnalysis", "The Pragmatic Engineer"]}
-          colors={["indigo", "cyan"]}
-          valueFormatter={dataFormatter}
-        />
-      </Card>
-    )
+const initialNodes = [
+  {
+    id: getId(),
+    position: {x: 0, y: 0},
+    data: {
+      isLocked: false,
+      chartData,
+    },
+    type: "AreaChartNode",
+    deletable: true,
+    isLocked: false,
   },
   {
-    width: 320,
-    height: 200,
+    id: getId(),
+    position: {x: 0, y: 320},
+    data: {
+      isLocked: false,
+      chartData,
+    },
+    type: "AreaChartNode",
+    deletable: true,
+    isLocked: false,
+  },
+]
+
+export default function App() {
+  const [isEditing, seItsEditing] = useState(true)
+  const [currentDraggedNodes, setCurrentDraggedNode] =
+    useState<Node<unknown>[]>()
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance>()
+  const [helperLineHorizontal, setHelperLineHorizontal] = useState<
+    number | undefined
+  >(undefined)
+  const [helperLineVertical, setHelperLineVertical] = useState<
+    number | undefined
+  >(undefined)
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const [canvasHeight, setCanvasHeight] = useRecoilState(dashboardCanvasHeight)
+  const gap = useRecoilValue(gridGap)
+
+  const nodeTypes = useMemo(
+    () => ({
+      AreaChartNode,
+      BarChartNode,
+    }),
+    []
+  )
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+
+  const onDrop: DragEventHandler<HTMLDivElement> = useCallback(
+    (event) => {
+      event.preventDefault()
+      if (reactFlowWrapper.current) {
+        const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect()
+        const type = event.dataTransfer.getData("application/reactflow")
+
+        // check if the dropped element is valid
+        if (typeof type === "undefined" || !type) {
+          return
+        }
+        if (reactFlowInstance) {
+          const position = reactFlowInstance.project({
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+          })
+
+          const newNode = {
+            id: getId(),
+            parentNode: "dndnode_0",
+            type,
+            position,
+            data: {
+              isLocked: false,
+              chartData,
+              label: `${type} node`,
+            },
+            deletable: true,
+            isLocked: false,
+          }
+
+          setNodes((nodes) => [...nodes, newNode])
+        }
+      }
+    },
+    [reactFlowInstance, setNodes]
+  )
+
+  const handleDragOver: DragEventHandler<HTMLDivElement> = (event) => {
+    event.preventDefault()
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move"
+    }
   }
-)
 
-// App.
-const App = () => {
-  // Items state.
-  const [items] = useState(generateItems())
-  const dragSortOptions = {
-    action: "swap",
-    threshold: 50,
-  }
+  const handleNodeDragStop: NodeDragHandler = (_event, _node, nodes) => {
+    const draggedAndIntersectingNodes = nodes.reduce((accumulator, n) => {
+      const intersections = reactFlowInstance?.getIntersectingNodes(n, true)
 
-  // Items to children.
-  const children = items.map((item) => (
-    <AreaChartGraph
-      key={item.id}
-      isLocked={item.color === "blue"}
-      id={item.id}
-    />
-  ))
-
-  return (
-    <MuuriComponent
-      onMount={(grid) => {
-        // Drag release event.
-        grid.on("dragReleaseEnd", (item) => {
-          // Do something...
+      if (intersections) {
+        accumulator.push(...intersections)
+      }
+      return accumulator
+    }, [] as Node<unknown>[])
+    if (draggedAndIntersectingNodes?.length) {
+      setNodes((nodes) => {
+        currentDraggedNodes?.forEach((draggedNode) => {
+          const nodeIndex = nodes.findIndex(
+            (node) => node.id === draggedNode.id
+          )
+          nodes.splice(nodeIndex, 1, draggedNode)
         })
-      }}
-      // layoutDuration={0}
-      dragEnabled
-      dragFixed
-      dragStartPredicate={function (_item, e) {
-        if (e.target.classList.contains("react-resizable-handle")) {
-          return false
+        return [...nodes]
+      })
+    }
+    setCurrentDraggedNode(undefined)
+  }
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const parsedChanges = changes.map((change) => {
+        // Helper Lines
+        if (
+          changes.length === 1 &&
+          changes[0].type === "position" &&
+          changes[0].dragging &&
+          changes[0].position
+        ) {
+          const helperLines = getHelperLines(changes[0], nodes)
+
+          // if we have a helper line, we snap the node to the helper line position
+          // this is being done by manipulating the node position inside the change object
+          changes[0].position.x =
+            helperLines.snapPosition.x ?? changes[0].position.x
+          changes[0].position.y =
+            helperLines.snapPosition.y ?? changes[0].position.y
+
+          // if helper lines are returned, we set them so that they can be displayed
+          setHelperLineHorizontal(helperLines.horizontal)
+          setHelperLineVertical(helperLines.vertical)
         }
-        return true
-      }}
-      dragSortPredicate={(item) => {
-        const result = Muuri.ItemDrag.defaultSortPredicate(
-          item,
-          dragSortOptions
-        )
-        if (result?.grid._items[result.index].getProps().isLocked) {
-          return false
+        // Enable auto resize of the canvas
+        if (nodes) {
+          let farthestNode = nodes[0]
+          for (let i = 1; i < nodes.length; i += 1) {
+            const endYCoordinate = nodes[i].position.y + Number(nodes[i].height)
+            const currentFarthestEndCoordinate =
+              farthestNode.position.y + Number(farthestNode.height)
+            if (endYCoordinate > currentFarthestEndCoordinate) {
+              farthestNode = nodes[i]
+            }
+          }
+          const farthestEndYCoordinate =
+            farthestNode.position.y + Number(farthestNode.height)
+          if (farthestEndYCoordinate > DASHBOARD_CREATOR_COORDINATES.height) {
+            setCanvasHeight(farthestEndYCoordinate)
+          } else {
+            setCanvasHeight(DASHBOARD_CREATOR_COORDINATES.height)
+          }
         }
-        return result
-      }}
-      // dragPlaceholder={{
-      //   enabled: true,
-      // }}
-      dragSortHeuristics={{
-        sortInterval: 0,
-      }}
-      layout={{
-        fillGaps: true,
-      }}
-    >
-      {children}
-    </MuuriComponent>
+        return change
+      })
+      onNodesChange(parsedChanges)
+    },
+    [nodes, onNodesChange, setCanvasHeight]
+  )
+  return (
+    <main className="dashboard dndflow">
+      <div className="dashboard__editor-wrapper">
+        <ReactFlowProvider>
+          <ReactFlow
+            ref={reactFlowWrapper}
+            className="dashboard__editor"
+            nodes={nodes}
+            onNodesChange={handleNodesChange}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={handleDragOver}
+            nodeTypes={nodeTypes}
+            minZoom={1}
+            maxZoom={isEditing ? 2 : 1}
+            defaultViewport={{
+              x: 0,
+              y: 0,
+              zoom: 1,
+            }}
+            panOnDrag={true}
+            panOnScroll={true}
+            panOnScrollMode={PanOnScrollMode.Vertical}
+            panActivationKeyCode={null}
+            zoomActivationKeyCode={null}
+            autoPanOnNodeDrag={true}
+            zoomOnScroll={false}
+            zoomOnPinch={false}
+            zoomOnDoubleClick={false}
+            selectionOnDrag
+            nodeExtent={[
+              [0, 0],
+              [DASHBOARD_CREATOR_COORDINATES.width, Infinity],
+            ]}
+            snapToGrid
+            onNodeDragStart={(_event, _node, nodes) => {
+              setCurrentDraggedNode(nodes)
+            }}
+            onNodeDragStop={handleNodeDragStop}
+            translateExtent={[
+              [0, 0],
+              [DASHBOARD_CREATOR_COORDINATES.width, canvasHeight],
+            ]}
+            proOptions={proOptions}
+          >
+            <Controls showFitView={false} showZoom={isEditing ?? false} />
+            <Background variant={BackgroundVariant.Dots} gap={gap} />
+            <HelperLines
+              horizontal={helperLineHorizontal}
+              vertical={helperLineVertical}
+            />
+          </ReactFlow>
+        </ReactFlowProvider>
+      </div>
+      <Sidebar />
+    </main>
   )
 }
-
-export default App

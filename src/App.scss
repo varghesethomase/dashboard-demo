@@ -1,0 +1,69 @@
+.dashboard {
+  display: flex;
+  position: relative;
+  height: 100vh;
+  &__editor-wrapper {
+    background-color: #e0e6ee;
+    padding: 32px;
+    min-width: calc(960px + 2 * 32px);
+  }
+  &__editor {
+    background-color: #fff;
+    border: 1px solid #a2abb7;
+    border-radius: 8px;
+    width: 960px;
+  }
+  &__sidebar {
+    flex: 1;
+  }
+}
+.recharts-wrapper {
+  pointer-events: none;
+}
+
+.dndflow aside {
+  border-right: 1px solid #eee;
+  padding: 15px 10px;
+  font-size: 12px;
+  background: #fcfcfc;
+}
+
+.dndflow aside .description {
+  margin-bottom: 10px;
+}
+
+.dndflow .dndnode {
+  height: 20px;
+  padding: 4px;
+  border: 1px solid #1a192b;
+  border-radius: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+}
+
+.dndflow .dndnode.input {
+  border-color: #0041d0;
+}
+
+.dndflow .dndnode.output {
+  border-color: #ff0072;
+}
+
+.dndflow .reactflow-wrapper {
+  flex-grow: 1;
+  height: 100%;
+}
+
+.dndflow .selectall {
+  margin-top: 10px;
+}
+
+@media screen and (min-width: 768px) {
+  .dndflow aside {
+    width: 20%;
+    max-width: 250px;
+  }
+}
