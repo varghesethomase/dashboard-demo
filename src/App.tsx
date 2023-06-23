@@ -16,7 +16,7 @@ import {DragEventHandler, useCallback, useMemo, useRef, useState} from "react"
 import "reactflow/dist/style.css"
 import "./App.scss"
 import {Sidebar} from "./Sidebar"
-import {DASHBOARD_CREATOR_COORDINATES, GRID_GAP} from "./configs"
+import {DASHBOARD_CREATOR_COORDINATES} from "./configs"
 import {useRecoilState, useRecoilValue} from "recoil"
 import {dashboardCanvasHeight, gridGap} from "./store"
 import getHelperLines from "./utils/getHelperLines"
@@ -181,6 +181,7 @@ export default function App() {
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
       const parsedChanges = changes.map((change) => {
+        // Helper Lines
         if (
           changes.length === 1 &&
           changes[0].type === "position" &&
@@ -199,27 +200,6 @@ export default function App() {
           // if helper lines are returned, we set them so that they can be displayed
           setHelperLineHorizontal(helperLines.horizontal)
           setHelperLineVertical(helperLines.vertical)
-        }
-        if (
-          change.type === "position" &&
-          change.position &&
-          change.positionAbsolute
-        ) {
-          // Prevents drag along the X coordinate
-          const changedNode = nodes.find((node) => node.id === change.id)
-          if (changedNode?.width) {
-            const newEndXCoordinate = change.position.x + changedNode.width
-            if (newEndXCoordinate > DASHBOARD_CREATOR_COORDINATES.width) {
-              change.position = {
-                x: DASHBOARD_CREATOR_COORDINATES.width - changedNode.width,
-                y: change.position.y,
-              }
-              change.positionAbsolute = {
-                x: DASHBOARD_CREATOR_COORDINATES.width - changedNode.width,
-                y: change.position.y,
-              }
-            }
-          }
         }
         // Enable auto resize of the canvas
         if (nodes) {
